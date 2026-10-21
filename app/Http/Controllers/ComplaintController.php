@@ -122,6 +122,9 @@ class ComplaintController extends Controller
 
         $complaint->update([
             'status' => $validated['status'],
+            'status_updated_at' => $complaint->status !== $validated['status']
+                ? now()
+                : $complaint->status_updated_at,
             'rejection_reason' => $validated['status'] === 'rejected'
                 ? $validated['rejection_reason']
                 : null,
@@ -161,6 +164,21 @@ class ComplaintController extends Controller
             ->with('success', 'Response added successfully.');
     }
 
+    /**
+     * Mark a response notification as read for its complaint owner.
+     */
+    public function markResponseAsRead(Request $request, ComplaintResponse $response): RedirectResponse
+    {
+        $response->load('complaint');
+        abort_unless($response->complaint->user_id === $request->user()->id, 403);
+
+        if ($response->read_at === null) {
+            $response->update(['read_at' => now()]);
+        }
+
+        return redirect()->route('dashboard');
+    }
+
     
 /**
  * Show complaints submitted by the authenticated student.
@@ -174,6 +192,7 @@ public function index(Request $request): View
 
     $complaints = Complaint::where('user_id', $request->user()->id)
         ->with('category')
+        ->withCount('responses')
         ->when($validated['status'] ?? null, function ($query, string $status) {
             $query->where('status', $status);
         })
@@ -186,5 +205,27 @@ public function index(Request $request): View
 
     return view('complaints.index', compact('complaints'));
 }
+
+    /**
+     * Delete an untouched complaint owned by the authenticated student.
+     */
+    public function destroy(Request $request, Complaint $complaint): RedirectResponse
+    {
+        abort_unless($complaint->user_id === $request->user()->id, 403);
+
+        $canDelete = $complaint->status === 'pending'
+            && $complaint->verified_at === null
+            && ! $complaint->responses()->exists();
+
+        if (! $canDelete) {
+            return redirect()->route('complaints.index')
+                ->with('error', 'This complaint cannot be deleted because staff have already acted on it.');
+        }
+
+        $complaint->delete();
+
+        return redirect()->route('complaints.index')
+            ->with('success', 'Complaint deleted successfully.');
+    }
 
 }

@@ -64,6 +64,52 @@
 
 </div>
 
+{{-- Staff Response Notifications --}}
+<div style="background: var(--surface); border: 1px solid {{ $unreadResponseCount > 0 ? '#c7d2fe' : 'var(--border)' }}; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 1.5rem; overflow: hidden;">
+    <div class="mobile-stack" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+        <h2 style="font-size: 1.05rem; font-weight: 700; margin: 0;">
+            Staff Responses
+            @if($unreadResponseCount > 0)
+                <span aria-label="{{ $unreadResponseCount }} unread responses" style="display: inline-flex; align-items: center; justify-content: center; min-width: 1.4rem; height: 1.4rem; margin-left: 0.35rem; padding: 0 0.35rem; border-radius: 9999px; background: var(--primary); color: white; font-size: 0.75rem;">{{ $unreadResponseCount }}</span>
+            @endif
+        </h2>
+    </div>
+    @forelse($responseNotifications as $notification)
+        <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: {{ $notification->read_at ? 'var(--surface)' : 'var(--primary-light)' }};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                <div style="min-width: 0; flex: 1;">
+                    <div style="font-weight: 700; color: var(--text-main);">
+                        {{ $notification->complaint->title }}
+                        @if($notification->read_at === null)
+                            <span style="font-size: 0.7rem; color: var(--primary); margin-left: 0.35rem;">Unread</span>
+                        @endif
+                    </div>
+                    <p style="margin: 0.35rem 0; color: var(--text-muted); font-size: 0.9rem;">
+                        {{ \Illuminate\Support\Str::limit($notification->comment, 140) }}
+                    </p>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">
+                        {{ $notification->created_at->format('M d, Y g:i A') }}
+                        &bull; Status: {{ ucfirst(str_replace('_', ' ', $notification->complaint->status)) }}
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                    <a href="{{ route('complaints.show', $notification->complaint) }}" class="btn btn-outline" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">View complaint</a>
+                    @if($notification->read_at === null)
+                        <form method="POST" action="{{ route('notifications.responses.read', $notification) }}">
+                            @csrf
+                            <button type="submit" class="btn btn-primary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">Mark as read</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @empty
+        <div style="padding: 2rem 1.5rem; text-align: center; color: var(--text-muted);">
+            No new staff responses.
+        </div>
+    @endforelse
+</div>
+
 {{-- Recent Complaints --}}
 <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);">
 
@@ -98,6 +144,9 @@
                         </div>
                     </div>
                     <div class="mobile-badges" style="display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;">
+                        @if(in_array($complaint->id, $statusUpdatedComplaintIds, true))
+                            <span style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 9999px;">Updated since last visit</span>
+                        @endif
                         {{-- Priority Badge --}}
                         @php
                             $priorityColors = [
@@ -126,6 +175,18 @@
                             {{ $statusLabel }}
                         </span>
                     </div>
+                    @if($complaint->status_updated_at || $complaint->responses->isNotEmpty())
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+                            @if($complaint->status_updated_at)
+                                Status updated {{ $complaint->status_updated_at->format('M d, Y g:i A') }}
+                            @endif
+                            @if($complaint->responses->isNotEmpty())
+                                @if($complaint->status_updated_at) &bull; @endif
+                                Latest staff response {{ $complaint->responses->first()->created_at->format('M d, Y g:i A') }}:
+                                {{ \Illuminate\Support\Str::limit($complaint->responses->first()->comment, 120) }}
+                            @endif
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>
