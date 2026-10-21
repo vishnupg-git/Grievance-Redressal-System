@@ -16,7 +16,15 @@ class ComplaintResponse extends Model
         'complaint_id',
         'staff_id',
         'comment',
+        'read_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'read_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the complaint that this response belongs to.

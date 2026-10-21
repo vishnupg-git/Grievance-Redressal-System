@@ -39,7 +39,9 @@ Route::middleware(['auth', 'student'])->group(function () {
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+    Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
     Route::get('/complaints/{complaint}', [ComplaintController::class, 'studentShow'])->name('complaints.show');
+    Route::post('/notifications/responses/{response}/read', [ComplaintController::class, 'markResponseAsRead'])->name('notifications.responses.read');
 });
 
 // Authenticated General Routes

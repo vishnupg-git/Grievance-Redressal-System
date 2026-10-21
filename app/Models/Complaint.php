@@ -20,6 +20,7 @@ class Complaint extends Model
         'description',
         'priority',
         'status',
+        'status_updated_at',
         'verified_at',
         'verified_by',
         'rejection_reason',
@@ -29,6 +30,7 @@ class Complaint extends Model
     {
         return [
             'verified_at' => 'datetime',
+            'status_updated_at' => 'datetime',
         ];
     }
 

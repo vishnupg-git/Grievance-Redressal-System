@@ -4,6 +4,12 @@
 
 @section('content')
 <div style="max-width: 1000px; margin: 0 auto;">
+    @if(session('success'))
+        <div class="alert alert-success" style="margin-bottom: 1rem;">{{ session('success') }}</div>
+    @elseif(session('error'))
+        <div class="alert alert-danger" style="margin-bottom: 1rem;">{{ session('error') }}</div>
+    @endif
+
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
         <div>
             <h1 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem;">My Complaints</h1>
@@ -50,9 +56,20 @@
                         {{ $complaint->category->name }} &bull; {{ ucfirst($complaint->priority) }} priority &bull; {{ $complaint->created_at->format('M d, Y') }}
                     </div>
                 </div>
-                <span style="background: {{ $sc['bg'] }}; color: {{ $sc['color'] }}; border: 1px solid {{ $sc['border'] }}; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 9999px;">
-                    {{ $statusLabel }}
-                </span>
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end;">
+                    <span style="background: {{ $sc['bg'] }}; color: {{ $sc['color'] }}; border: 1px solid {{ $sc['border'] }}; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 9999px;">
+                        {{ $statusLabel }}
+                    </span>
+                    @if($complaint->status === 'pending' && is_null($complaint->verified_at) && $complaint->responses_count === 0)
+                        <form method="POST" action="{{ route('complaints.destroy', $complaint) }}" onsubmit="return confirm('Delete this complaint? This action cannot be undone.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; color: #b91c1c; border-color: #fecaca;">Delete</button>
+                        </form>
+                    @else
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Deletion unavailable</span>
+                    @endif
+                </div>
             </div>
         @empty
             <div style="padding: 3rem 1.5rem; text-align: center; color: var(--text-muted);">
