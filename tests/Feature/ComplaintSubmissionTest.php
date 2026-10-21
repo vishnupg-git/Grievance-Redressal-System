@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Complaint;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Notifications\ComplaintSubmitted;
 use Tests\TestCase;
 
 class ComplaintSubmissionTest extends TestCase
@@ -27,6 +28,7 @@ class ComplaintSubmissionTest extends TestCase
     public function test_a_student_can_submit_a_complaint(): void
     {
         $user = User::factory()->create(['role' => 'student']);
+        $staff = User::factory()->create(['role' => 'staff']);
         $category = Category::create(['name' => 'Academic']);
 
         $response = $this->actingAs($user)->post(route('complaints.store'), [
@@ -45,6 +47,17 @@ class ComplaintSubmissionTest extends TestCase
             'priority' => 'high',
             'status' => 'pending',
         ]);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $staff->id,
+            'type' => ComplaintSubmitted::class,
+        ]);
+
+        $staffDashboard = $this->actingAs($staff)->get(route('staff.dashboard'));
+
+        $staffDashboard->assertOk();
+        $staffDashboard->assertSee('Issue with examination schedule');
+        $staffDashboard->assertSee('The published examination schedule contains a conflicting time slot.');
+        $staffDashboard->assertSee('High');
     }
 
     public function test_invalid_complaint_data_is_rejected(): void

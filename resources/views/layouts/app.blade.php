@@ -259,6 +259,39 @@
             border: 1px solid #fecaca;
         }
 
+        .staff-notifications {
+            position: fixed;
+            top: 5.5rem;
+            right: 1.5rem;
+            z-index: 60;
+            width: min(380px, calc(100% - 3rem));
+        }
+
+        .staff-notification {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-main);
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            border-left: 4px solid var(--primary);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .staff-notification-close {
+            align-self: flex-start;
+            padding: 0;
+            color: var(--text-muted);
+            background: transparent;
+            border: 0;
+            font-size: 1.35rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
         .auth-footer {
             margin-top: 1.5rem;
             text-align: center;
@@ -465,5 +498,12 @@
     <footer>
         <p>&copy; {{ date('Y') }} Grievance Redressal System &bull; Student Portal</p>
     </footer>
+    <script>
+        document.querySelectorAll('[data-dismiss-notification]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                button.closest('[data-notification]').remove();
+            });
+        });
+    </script>
 </body>
 </html>

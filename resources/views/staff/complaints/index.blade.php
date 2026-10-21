@@ -4,6 +4,33 @@
 
 @section('content')
 <div class="staff-shell">
+@if($notifications->isNotEmpty())
+    <div class="staff-notifications" role="status" aria-live="polite">
+        @foreach($notifications as $notification)
+            <div class="staff-notification" data-notification>
+                <div>
+                    <strong>New complaint submitted</strong>
+                    <p style="margin: 0.25rem 0 0.5rem;">
+                        <a href="{{ route('staff.complaints.show', $notification->data['complaint_id']) }}" style="color: inherit; font-weight: 600;">
+                            {{ $notification->data['title'] }}
+                        </a>
+                    </p>
+                    <p style="margin: 0 0 0.5rem; color: var(--text-muted); font-size: 0.85rem;">
+                        {{ $notification->data['description'] }}
+                    </p>
+                    <div style="font-size: 0.85rem;">
+                        Urgency:
+                        <span class="priority-badge priority-{{ $notification->data['priority'] }}">
+                            {{ ucfirst($notification->data['priority']) }}
+                        </span>
+                    </div>
+                </div>
+                <button type="button" class="staff-notification-close" data-dismiss-notification aria-label="Dismiss notification">&times;</button>
+            </div>
+        @endforeach
+    </div>
+@endif
+
 <div style="display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
     <div>
         <p class="staff-kicker">Staff workspace</p>

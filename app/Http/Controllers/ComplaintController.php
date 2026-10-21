@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Complaint;
 use App\Models\ComplaintResponse;
+use App\Models\User;
+use App\Notifications\ComplaintSubmitted;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,11 +36,16 @@ class ComplaintController extends Controller
             'priority' => ['required', 'in:low,medium,high'],
         ]);
 
-        Complaint::create([
+        $complaint = Complaint::create([
             ...$validated,
             'user_id' => $request->user()->id,
             'status' => 'pending',
         ]);
+
+        $complaint->load('user');
+        User::where('role', 'staff')->get()->each(
+            fn (User $staff) => $staff->notify(new ComplaintSubmitted($complaint))
+        );
 
         return redirect()->route('dashboard')
             ->with('success', 'Your complaint has been submitted successfully.');
@@ -50,6 +57,7 @@ class ComplaintController extends Controller
     public function staffIndex(): View
     {
         $query = Complaint::with(['user', 'category']);
+        $notifications = request()->user()->unreadNotifications()->latest()->get();
 
         if ($search = request('search')) {
             $query->where(function (Builder $query) use ($search) {
@@ -85,7 +93,7 @@ class ComplaintController extends Controller
             'unverified' => Complaint::whereNull('verified_at')->count(),
         ];
 
-        return view('staff.complaints.index', compact('complaints', 'stats'));
+        return view('staff.complaints.index', compact('complaints', 'stats', 'notifications'));
     }
 
     /**
